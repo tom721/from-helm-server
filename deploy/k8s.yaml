@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: from-helm
+  name: from-helm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: from-helm
+  template:
+    metadata:
+      labels:
+        app: from-helm
+    spec:
+      serviceAccountName: from-helm
+      containers:
+      - image: localhost:5000/from-helm:0.0.1
+        name: from-helm
+        imagePullPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: from-helm
+  name: from-helm
+spec:
+  selector:
+    app: from-helm
+  ports:
+  - port: 80
+    targetPort: 8081
+  type: NodePort
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: from-helm
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: from-helm
+rules:
+- apiGroups: ["helm.fluxcd.io"]
+  resources: ["helmreleases"]
+  verbs: ["get", "list", "create", "update", "patch", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: from-helm
+subjects:
+- kind: ServiceAccount
+  name: from-helm
+  namespace: default
+  apiGroup: ""
+roleRef:
+  kind: ClusterRole
+  name: from-helm
+  apiGroup: rbac.authorization.k8s.io
